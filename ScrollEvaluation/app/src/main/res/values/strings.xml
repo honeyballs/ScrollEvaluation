@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">Scroll Evaluation</string>
+    <string name="settings">Settings</string>
+
+    <!--Settings headlines-->
+    <string name="listType">List type</string>
+
+
+    <!--List options-->
+    <array name="listOptions">
+        <item>Numerical (ordered)</item>
+        <item>Alphabetical (semi ordered)</item>
+        <item>Images (chaotic)</item>
+    </array>
 </resources>
