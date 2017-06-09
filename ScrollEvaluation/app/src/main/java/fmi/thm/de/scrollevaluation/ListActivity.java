@@ -4,10 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 
 public class ListActivity extends AppCompatActivity {
 
-    private static final String LIST_ACTIVITY = "ListActivity";
+    private static final String TAG = "ListActivity";
 
     private static final int REQUEST_CODE = 1337;
 
@@ -29,6 +29,9 @@ public class ListActivity extends AppCompatActivity {
     private ListAdapter adapter;
 
     private ArrayList<String> data;
+
+    private MyLayoutManager layoutManager;
+    private int scrollMultiplier = 150;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,7 +47,7 @@ public class ListActivity extends AppCompatActivity {
         //improves performance
         list.setHasFixedSize(true);
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager = new MyLayoutManager(this);
         list.setLayoutManager(layoutManager);
 
         data = new ArrayList<>();
@@ -96,7 +99,7 @@ public class ListActivity extends AppCompatActivity {
 
                 Bundle settings = data.getExtras();
                 String listType = settings.getString("listType");
-                Log.e(LIST_ACTIVITY, listType);
+                Log.e(TAG, listType);
 
             }
         }
@@ -110,6 +113,51 @@ public class ListActivity extends AppCompatActivity {
         }
 
         adapter.notifyDataSetChanged();
+
+    }
+
+    //Override Volume Keys to scroll
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                scrollListUp();
+                return true;
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+                scrollListDown();
+                return true;
+            default:
+                return super.onKeyDown(keyCode, event);
+
+        }
+    }
+
+
+    //Reset multiplier when button is released
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            scrollMultiplier = 150;
+        }
+
+        return super.onKeyUp(keyCode, event);
+    }
+
+
+
+    private void scrollListDown() {
+
+        scrollMultiplier++;
+        list.smoothScrollBy(0, 1 * scrollMultiplier);
+        Log.e(TAG, "" + scrollMultiplier);
+
+    }
+
+    private void scrollListUp() {
+        scrollMultiplier++;
+        list.smoothScrollBy(0, -1 * scrollMultiplier);
 
     }
 
