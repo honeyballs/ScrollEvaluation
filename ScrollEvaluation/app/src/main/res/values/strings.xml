@@ -4,12 +4,20 @@
 
     <!--Settings headlines-->
     <string name="listType">List type</string>
-
+    <string name="scrollingType">Scrolling method</string>
 
     <!--List options-->
     <array name="listOptions">
         <item>Numerical (ordered)</item>
         <item>Alphabetical (semi ordered)</item>
         <item>Images (chaotic)</item>
+    </array>
+
+    <!--Scroll options-->
+    <array name="scrollOptions">
+        <item>Standard</item>
+        <item>Volume Buttons</item>
+        <item>Dot</item>
+        <item>Scrollwheel</item>
     </array>
 </resources>

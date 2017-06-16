@@ -17,6 +17,7 @@ import android.widget.Spinner;
 public class SettingsActivity extends AppCompatActivity {
 
     private Spinner typeSpinner;
+    private Spinner scrollSpinner;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -29,6 +30,11 @@ public class SettingsActivity extends AppCompatActivity {
         ArrayAdapter<CharSequence> adapter  = ArrayAdapter.createFromResource(this, R.array.listOptions, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         typeSpinner.setAdapter(adapter);
+
+        scrollSpinner = (Spinner) findViewById(R.id.scrollTypeSpinner);
+        ArrayAdapter<CharSequence> adapter2  = ArrayAdapter.createFromResource(this, R.array.scrollOptions, android.R.layout.simple_spinner_item);
+        adapter2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        scrollSpinner.setAdapter(adapter2);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(toolbar);
@@ -57,9 +63,11 @@ public class SettingsActivity extends AppCompatActivity {
         //TODO: Settings for scroll types
 
         String listType = (String) typeSpinner.getSelectedItem();
+        String scrollType = (String) scrollSpinner.getSelectedItem();
 
         Intent intent = new Intent();
         intent.putExtra("listType", listType);
+        intent.putExtra("scrollType", scrollType);
         setResult(Activity.RESULT_OK, intent);
         finish();
 

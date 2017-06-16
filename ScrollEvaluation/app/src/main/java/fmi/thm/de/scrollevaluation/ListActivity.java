@@ -25,6 +25,17 @@ public class ListActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE = 1337;
 
+    //list types
+    private static final String NUMERICAL = "Numerical (ordered)";
+    private static final String ALPHABETICAL = "Alphabetical (semi ordered)";
+    private static final String UNORDERED = "Images (chaotic)";
+
+    //scrolling methods
+    private static final String STANDARD = "Standard";
+    private static final String VOLUME = "Volume Buttons";
+    private static final String DOT = "Dot";
+    private static final String WHEEL = "Scrollwheel";
+
     private RecyclerView list;
     private ListAdapter adapter;
 
@@ -32,6 +43,9 @@ public class ListActivity extends AppCompatActivity {
 
     private MyLayoutManager layoutManager;
     private int scrollMultiplier = 150;
+
+    private String currentList = NUMERICAL;
+    private String currentScroll = STANDARD;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -99,6 +113,18 @@ public class ListActivity extends AppCompatActivity {
 
                 Bundle settings = data.getExtras();
                 String listType = settings.getString("listType");
+                String scrollType = settings.getString("scrollType");
+
+                if (!currentList.equals(listType)) {
+                    currentList = listType;
+                    //TODO: Change list
+                }
+
+                if (!currentScroll.equals(scrollType)) {
+                    currentScroll = scrollType;
+                    //TODO: Change scrolling
+                }
+
                 Log.e(TAG, listType);
 
             }
@@ -122,10 +148,10 @@ public class ListActivity extends AppCompatActivity {
 
         switch (keyCode) {
             case KeyEvent.KEYCODE_VOLUME_UP:
-                scrollListUp();
+                if (currentScroll.equals(VOLUME)) scrollListUp();
                 return true;
             case KeyEvent.KEYCODE_VOLUME_DOWN:
-                scrollListDown();
+                if (currentScroll.equals(VOLUME)) scrollListDown();
                 return true;
             default:
                 return super.onKeyDown(keyCode, event);
