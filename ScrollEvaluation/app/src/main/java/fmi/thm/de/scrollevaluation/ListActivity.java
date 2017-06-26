@@ -1,8 +1,11 @@
 package fmi.thm.de.scrollevaluation;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -47,6 +50,10 @@ public class ListActivity extends AppCompatActivity {
     private String currentList = NUMERICAL;
     private String currentScroll = STANDARD;
 
+    //Timer variables
+    private long startTime = 0;
+    private long endTime = 0;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,7 +83,9 @@ public class ListActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        this.fillListWithNumbers(150);
+        if (data.size() == 0) {
+            this.fillListWithNumbers(150);
+        }
 
     }
 
@@ -97,6 +106,9 @@ public class ListActivity extends AppCompatActivity {
             case R.id.settings_item:
                 Intent intent = new Intent(this, SettingsActivity.class);
                 startActivityForResult(intent, REQUEST_CODE);
+                return true;
+            case R.id.time_item:
+                startTest();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -184,6 +196,37 @@ public class ListActivity extends AppCompatActivity {
     private void scrollListUp() {
         scrollMultiplier++;
         list.smoothScrollBy(0, -1 * scrollMultiplier);
+
+    }
+
+
+    private void startTest() {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Test scrolling method");
+        //TODO: choose element to scroll to at random
+        builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the 145th Element and click it. Your time will be saved. Ready?");
+
+        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                startTime = System.currentTimeMillis();
+                adapter.setStartTime(startTime);
+                adapter.setNrOfTestitem("145");
+                Log.e(TAG, ""+startTime);
+
+            }
+        });
+
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        builder.show();
 
     }
 

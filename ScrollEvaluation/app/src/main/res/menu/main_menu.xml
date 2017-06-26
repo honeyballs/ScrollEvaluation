@@ -7,4 +7,9 @@
         android:title="@string/settings"
         android:icon="@drawable/ic_settings_white_24dp"/>
 
+    <item android:id="@+id/time_item"
+        app:showAsAction="always"
+        android:title="@string/timing"
+        android:icon="@drawable/ic_alarm_white_24dp"/>
+
 </menu>
