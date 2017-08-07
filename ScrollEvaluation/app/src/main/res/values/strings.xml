@@ -23,4 +23,59 @@
         <item>Dot</item>
         <item>Scrollwheel</item>
     </array>
+
+    <!--List of names-->
+    <array name="nameList">
+        <item>Gale Stegall</item>
+        <item>Liliana Diener</item>
+        <item>Jani Rudman</item>
+        <item>Kathryne Breitenstein</item>
+        <item>Cecille Hartranft</item>
+        <item>Ossie Robeson</item>
+        <item>Anneliese Scates</item>
+        <item>Rosemarie Buch</item>
+        <item>Concha Waldrip</item>
+        <item>Jerrold Delorey</item>
+        <item>Roberta Mahar</item>
+        <item>Shirlene Skelly</item>
+        <item>Belva Lufkin</item>
+        <item>Milly Guerrero</item>
+        <item>Tawny Escareno</item>
+        <item>Ruth Pflum</item>
+        <item>Mathew Riess</item>
+        <item>Cornelia Tempel</item>
+        <item>Leland Brazelton</item>
+        <item>Allena Compos</item>
+        <item>Rupert Burgos</item>
+        <item>Syble Netherland</item>
+        <item>Mirna Camel</item>
+        <item>Joana Lim</item>
+        <item>Wes Courter</item>
+        <item>Francesco Stromberg</item>
+        <item>Lindy Dent</item>
+        <item>Alethia Capetillo</item>
+        <item>Dominga Watts</item>
+        <item>Ana Wanke</item>
+        <item>Emerson Hile</item>
+        <item>Micah Dove</item>
+        <item>Bernadette Mahony</item>
+        <item>Nakisha Swayze</item>
+        <item>Mertie Appleton</item>
+        <item>Lean Eckhart</item>
+        <item>Rhoda Demille</item>
+        <item>Claudine Burnette</item>
+        <item>Eugenie Steffes</item>
+        <item>Bari Seybert</item>
+        <item>Jules Foss</item>
+        <item>Donnetta Yokota</item>
+        <item>Vern Stork</item>
+        <item>Terry Burgo</item>
+        <item>Emmy Groseclose</item>
+        <item>Britt Granados</item>
+        <item>Adria Spengler</item>
+        <item>Talia Mariano</item>
+        <item>Lawrence Hershberger</item>
+        <item>Felix Kenton</item>
+    </array>
 </resources>
+

@@ -19,6 +19,5 @@ public class MyLayoutManager extends LinearLayoutManager {
     public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
         super.smoothScrollToPosition(recyclerView, state, position);
 
-
     }
 }

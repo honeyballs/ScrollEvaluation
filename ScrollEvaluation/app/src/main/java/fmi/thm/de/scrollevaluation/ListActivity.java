@@ -15,7 +15,10 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 
 
 /**
@@ -40,7 +43,7 @@ public class ListActivity extends AppCompatActivity {
     private static final String WHEEL = "Scrollwheel";
 
     private RecyclerView list;
-    private ListAdapter adapter;
+    private RecyclerView.Adapter adapter;
 
     private ArrayList<String> data;
 
@@ -51,6 +54,7 @@ public class ListActivity extends AppCompatActivity {
     private String currentScroll = STANDARD;
 
     //Timer variables
+    private String testElement="145";
     private long startTime = 0;
     private long endTime = 0;
 
@@ -72,10 +76,6 @@ public class ListActivity extends AppCompatActivity {
         list.setLayoutManager(layoutManager);
 
         data = new ArrayList<>();
-        adapter = new ListAdapter(data);
-
-        list.setAdapter(adapter);
-
 
     }
 
@@ -83,9 +83,7 @@ public class ListActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
-        if (data.size() == 0) {
-            this.fillListWithNumbers(150);
-        }
+        setList();
 
     }
 
@@ -129,8 +127,8 @@ public class ListActivity extends AppCompatActivity {
 
                 if (!currentList.equals(listType)) {
                     currentList = listType;
-                    //TODO: Change list
-                }
+                    setList();
+                    }
 
                 if (!currentScroll.equals(scrollType)) {
                     currentScroll = scrollType;
@@ -144,14 +142,47 @@ public class ListActivity extends AppCompatActivity {
 
     }
 
-    private void fillListWithNumbers(int length) {
+    private void setList() {
+        switch (currentList) {
+            case NUMERICAL:
+                data.clear();
+                fillListWithNumbers(150);
+                adapter = new ListAdapter(data);
+                list.setAdapter(adapter);
+                break;
+            case ALPHABETICAL:
+                data.clear();
+                fillListWithContacts();
+                adapter = new ListAdapterSemi(data);
+                list.setAdapter(adapter);
+                break;
+            default:
+                break;
+        }
+    }
 
+    private void fillListWithNumbers(int length) {
         for (int i = 1; i<= length; i ++) {
             data.add("" + i);
         }
+    }
 
-        adapter.notifyDataSetChanged();
-
+    private void fillListWithContacts() {
+        String[] contacts = getResources().getStringArray(R.array.nameList);
+        Arrays.sort(contacts);
+        for (int i = 0; i<contacts.length; i++) {
+            if ( i == 0) {
+                data.add(contacts[i].substring(0,1));
+                data.add(contacts[i]);
+            } else if (i == contacts.length -1) {
+                data.add(contacts[i]);
+            } else if (!(contacts[i].substring(0,1).equals(contacts[i + 1].substring(0,1)))) {
+                data.add(contacts[i]);
+                data.add(contacts[i+1].substring(0,1));
+            } else {
+                data.add(contacts[i]);
+            }
+        }
     }
 
     //Override Volume Keys to scroll
@@ -171,7 +202,7 @@ public class ListActivity extends AppCompatActivity {
         }
     }
 
-
+    //Begin volume scroll functions
     //Reset multiplier when button is released
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
@@ -198,22 +229,38 @@ public class ListActivity extends AppCompatActivity {
         list.smoothScrollBy(0, -1 * scrollMultiplier);
 
     }
-
+    //End volume scroll functions
 
     private void startTest() {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Test scrolling method");
         //TODO: choose element to scroll to at random
-        builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the 145th Element and click it. Your time will be saved. Ready?");
+
+        if (currentList.equals(NUMERICAL)) {
+            testElement = "145";
+        } else if (currentList.equals(ALPHABETICAL)) {
+            testElement="Terry Burgo";
+        }
+
+        builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the element \"" +testElement+ "\" and click it. Your time will be saved. Ready?");
 
         builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
-                startTime = System.currentTimeMillis();
-                adapter.setStartTime(startTime);
-                adapter.setNrOfTestitem("145");
+                if (currentList.equals(NUMERICAL)) {
+                    ListAdapter la = (ListAdapter) adapter;
+                    startTime = System.currentTimeMillis();
+                    la.setStartTime(startTime);
+                    la.setNrOfTestitem(testElement);
+                } else if (currentList.equals(ALPHABETICAL)) {
+                    ListAdapterSemi las = (ListAdapterSemi) adapter;
+                    startTime = System.currentTimeMillis();
+                    las.setStartTime(startTime);
+                    las.setNrOfTestitem(testElement);
+                }
+
                 Log.e(TAG, ""+startTime);
 
             }
