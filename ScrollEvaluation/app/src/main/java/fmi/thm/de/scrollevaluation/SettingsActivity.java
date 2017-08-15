@@ -57,6 +57,10 @@ public class SettingsActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onBackPressed() {
+        returnResults();
+    }
 
     private void returnResults() {
 

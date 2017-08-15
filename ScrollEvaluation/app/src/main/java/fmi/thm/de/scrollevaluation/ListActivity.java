@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -146,16 +147,24 @@ public class ListActivity extends AppCompatActivity {
         switch (currentList) {
             case NUMERICAL:
                 data.clear();
+                list.setLayoutManager(layoutManager);
                 fillListWithNumbers(150);
                 adapter = new ListAdapter(data);
                 list.setAdapter(adapter);
                 break;
             case ALPHABETICAL:
                 data.clear();
+                list.setLayoutManager(layoutManager);
                 fillListWithContacts();
                 adapter = new ListAdapterSemi(data);
                 list.setAdapter(adapter);
                 break;
+            case UNORDERED:
+                data.clear();
+                list.setLayoutManager(new GridLayoutManager(this, 2));
+                fillListWithNumbers(50);
+                adapter = new ListAdapterChaotic(data);
+                list.setAdapter(adapter);
             default:
                 break;
         }
@@ -239,26 +248,39 @@ public class ListActivity extends AppCompatActivity {
 
         if (currentList.equals(NUMERICAL)) {
             testElement = "145";
+            builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the element \"" +testElement+ "\" and click it. Your time will be saved. Ready?");
         } else if (currentList.equals(ALPHABETICAL)) {
             testElement="Terry Burgo";
+            builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the element \"" +testElement+ "\" and click it. Your time will be saved. Ready?");
+        } else {
+            testElement="47";
+            builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the element that says \"This\" and click it. Your time will be saved. Ready?");
+
         }
 
-        builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the element \"" +testElement+ "\" and click it. Your time will be saved. Ready?");
 
         builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
 
                 if (currentList.equals(NUMERICAL)) {
+                    list.scrollToPosition(0);
                     ListAdapter la = (ListAdapter) adapter;
                     startTime = System.currentTimeMillis();
                     la.setStartTime(startTime);
                     la.setNrOfTestitem(testElement);
                 } else if (currentList.equals(ALPHABETICAL)) {
+                    list.scrollToPosition(0);
                     ListAdapterSemi las = (ListAdapterSemi) adapter;
                     startTime = System.currentTimeMillis();
                     las.setStartTime(startTime);
                     las.setNrOfTestitem(testElement);
+                } else if (currentList.equals(UNORDERED)) {
+                    list.scrollToPosition(0);
+                    ListAdapterChaotic lac = (ListAdapterChaotic) adapter;
+                    startTime = System.currentTimeMillis();
+                    lac.setStartTime(startTime);
+                    lac.setNrOfTestitem(testElement);
                 }
 
                 Log.e(TAG, ""+startTime);
