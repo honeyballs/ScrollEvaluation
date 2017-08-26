@@ -2,6 +2,10 @@ package fmi.thm.de.scrollevaluation;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -26,7 +30,7 @@ import java.util.Collections;
  * Created by Yannick on 31.05.2017.
  */
 
-public class ListActivity extends AppCompatActivity {
+public class ListActivity extends AppCompatActivity implements SensorEventListener {
 
     private static final String TAG = "ListActivity";
 
@@ -40,6 +44,7 @@ public class ListActivity extends AppCompatActivity {
     //scrolling methods
     private static final String STANDARD = "Standard";
     private static final String VOLUME = "Volume Buttons";
+    private static final String TILT_BACK_FORTH = "Tilt Back & Forth";
     private static final String DOT = "Dot";
     private static final String WHEEL = "Scrollwheel";
 
@@ -53,6 +58,11 @@ public class ListActivity extends AppCompatActivity {
 
     private String currentList = NUMERICAL;
     private String currentScroll = STANDARD;
+
+    //Tilt Shit
+    private SensorManager mSensorManager;
+    private Sensor accelerometer;
+    private Sensor magnetometer;
 
     //Timer variables
     private String testElement="145";
@@ -70,6 +80,14 @@ public class ListActivity extends AppCompatActivity {
 
         list = (RecyclerView) findViewById(R.id.recycler_view);
 
+        //Tilt Shit
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+
+        initListeners();
+
         //improves performance
         list.setHasFixedSize(true);
 
@@ -80,12 +98,40 @@ public class ListActivity extends AppCompatActivity {
 
     }
 
+    public void initListeners()
+    {
+        mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
+    }
+
+    @Override
+    public void onDestroy()
+    {
+        mSensorManager.unregisterListener(this);
+        super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        mSensorManager.unregisterListener(this);
+        super.onBackPressed();
+    }
+
     @Override
     protected void onResume() {
+        initListeners();
         super.onResume();
 
         setList();
 
+    }
+
+    @Override
+    protected void onPause()
+    {
+        mSensorManager.unregisterListener(this);
+        super.onPause();
     }
 
     @Override
@@ -239,6 +285,125 @@ public class ListActivity extends AppCompatActivity {
 
     }
     //End volume scroll functions
+
+    //Begin Tilt Stuff
+    float[] inclineGravity = new float[3];
+    float[] mGravity;
+    float[] mGeomagnetic;
+    float orientation[] = new float[3];
+    float pitch;
+    float roll;
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        //If type is accelerometer only assign values to global property mGravity
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+        {
+            mGravity = event.values;
+        }
+        else if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+        {
+            mGeomagnetic = event.values;
+
+            if (isTiltDownward())
+            {
+                if (currentScroll.equals(TILT_BACK_FORTH)) {
+                    Log.d("test", "downwards");
+                    scrollListDown();
+                }
+            }
+            else if (isTiltUpward())
+            {
+                if (currentScroll.equals((TILT_BACK_FORTH))) {
+                    Log.d("test", "upwards");
+                    scrollListUp();
+                }
+            }
+        }
+
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public boolean isTiltUpward()
+    {
+        if (mGravity != null && mGeomagnetic != null)
+        {
+            float R[] = new float[9];
+            float I[] = new float[9];
+
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+
+            if (success)
+            {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+
+                /*
+                * If the roll is positive, you're in reverse landscape (landscape right), and if the roll is negative you're in landscape (landscape left)
+                *
+                * Similarly, you can use the pitch to differentiate between portrait and reverse portrait.
+                * If the pitch is positive, you're in reverse portrait, and if the pitch is negative you're in portrait.
+                *
+                * orientation -> azimut, pitch and roll
+                *
+                *
+                */
+
+                pitch = orientation[1];
+                roll = orientation[2];
+
+                if (pitch > -1.4 && roll > 1)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isTiltDownward()
+    {
+        if (mGravity != null && mGeomagnetic != null)
+        {
+            float R[] = new float[9];
+            float I[] = new float[9];
+
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+
+            if (success)
+            {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+
+                pitch = orientation[1];
+                roll = orientation[2];
+
+                if (pitch > -1 && roll < 0.1)
+                {
+
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    //End Tilt Stuff
 
     private void startTest() {
 

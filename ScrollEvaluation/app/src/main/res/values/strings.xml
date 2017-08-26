@@ -20,6 +20,7 @@
     <array name="scrollOptions">
         <item>Standard</item>
         <item>Volume Buttons</item>
+        <item>Tilt Back &amp; Forth</item>
         <item>Dot</item>
         <item>Scrollwheel</item>
     </array>
