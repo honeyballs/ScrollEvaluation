@@ -40,6 +40,11 @@ public class SettingsActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        //set the spinners to the current values
+        Bundle extras = getIntent().getExtras();
+        typeSpinner.setSelection(adapter.getPosition(extras.getString(ListActivity.LIST_KEY)));
+        scrollSpinner.setSelection(adapter2.getPosition(extras.getString(ListActivity.SCROLL_KEY)));
+
     }
 
     @Override

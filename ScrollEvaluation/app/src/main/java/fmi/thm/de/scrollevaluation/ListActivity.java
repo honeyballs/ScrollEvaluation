@@ -1,7 +1,9 @@
 package fmi.thm.de.scrollevaluation;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -19,6 +21,9 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -35,6 +40,10 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     private static final String TAG = "ListActivity";
 
     private static final int REQUEST_CODE = 1337;
+
+    //bundle keys
+    public static final String SCROLL_KEY = "scrollType";
+    public static final String LIST_KEY = "listType";
 
     //list types
     private static final String NUMERICAL = "Numerical (ordered)";
@@ -59,6 +68,9 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     private String currentList = NUMERICAL;
     private String currentScroll = STANDARD;
 
+    //TextField to show the current scrolling method
+    private TextView scrollView;
+
     //Tilt Shit
     private SensorManager mSensorManager;
     private Sensor accelerometer;
@@ -78,6 +90,8 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(toolbar);
 
+        scrollView = (TextView) findViewById(R.id.scrollingTextView);
+
         list = (RecyclerView) findViewById(R.id.recycler_view);
 
         //Tilt Shit
@@ -95,6 +109,13 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         list.setLayoutManager(layoutManager);
 
         data = new ArrayList<>();
+
+        //retrieve saved data
+        SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
+        if (prefs != null) {
+            currentList = prefs.getString(LIST_KEY, NUMERICAL);
+            currentScroll = prefs.getString(SCROLL_KEY, STANDARD);
+        }
 
     }
 
@@ -120,18 +141,12 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     protected void onResume() {
-        initListeners();
         super.onResume();
+        initListeners();
 
+        updateScrollView();
         setList();
 
-    }
-
-    @Override
-    protected void onPause()
-    {
-        mSensorManager.unregisterListener(this);
-        super.onPause();
     }
 
     @Override
@@ -150,6 +165,8 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
             case R.id.settings_item:
                 Intent intent = new Intent(this, SettingsActivity.class);
+                intent.putExtra(LIST_KEY, currentList);
+                intent.putExtra(SCROLL_KEY, currentScroll);
                 startActivityForResult(intent, REQUEST_CODE);
                 return true;
             case R.id.time_item:
@@ -163,14 +180,30 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     }
 
     @Override
+    protected void onPause()
+    {
+        mSensorManager.unregisterListener(this);
+
+        //save the current state
+        SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(LIST_KEY, currentList);
+        editor.putString(SCROLL_KEY, currentScroll);
+        editor.commit();
+
+        super.onPause();
+    }
+
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         if (requestCode == REQUEST_CODE ) {
             if (resultCode == RESULT_OK) {
 
                 Bundle settings = data.getExtras();
-                String listType = settings.getString("listType");
-                String scrollType = settings.getString("scrollType");
+                String listType = settings.getString(LIST_KEY);
+                String scrollType = settings.getString(SCROLL_KEY);
 
                 if (!currentList.equals(listType)) {
                     currentList = listType;
@@ -179,7 +212,6 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
                 if (!currentScroll.equals(scrollType)) {
                     currentScroll = scrollType;
-                    //TODO: Change scrolling
                 }
 
                 Log.e(TAG, listType);
@@ -187,6 +219,11 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
             }
         }
 
+    }
+
+    //update the TextView which shows the currently activated scrolling method
+    private void updateScrollView() {
+        scrollView.setText(this.currentScroll);
     }
 
     private void setList() {
