@@ -56,6 +56,7 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     private static final String TILT_BACK_FORTH = "Tilt Back & Forth";
     private static final String DOT = "Dot";
     private static final String WHEEL = "Scrollwheel";
+    private static final String TILT_LEFT_RIGHT = "Tilt Left & Right" ;
 
     private RecyclerView list;
     private RecyclerView.Adapter adapter;
@@ -316,8 +317,20 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+    private void scrollListDown(int scrollMultiplier) {
+
+        list.smoothScrollBy(0, 1 * scrollMultiplier);
+        Log.e(TAG, "" + scrollMultiplier);
+
+    }
+
     private void scrollListUp() {
         scrollMultiplier++;
+        list.smoothScrollBy(0, -1 * scrollMultiplier);
+
+    }
+
+    private void scrollListUp(int scrollMultiplier) {
         list.smoothScrollBy(0, -1 * scrollMultiplier);
 
     }
@@ -342,18 +355,39 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         {
             mGeomagnetic = event.values;
 
-            if (isTiltDownward())
-            {
-                if (currentScroll.equals(TILT_BACK_FORTH)) {
+            if (currentScroll.equals(TILT_BACK_FORTH)) {
+                float breakPoint = -0.6f;
+                float ignoreRange = .4f;
+                float magicNumberOne = 13f;
+                float magicNumberTwo = 3f;
+                if (isTiltDownward(breakPoint, ignoreRange)) {
                     Log.d("test", "downwards");
-                    scrollListDown();
+                    int scrollMultiplier = (int) Math.abs(Math.pow((pitch-breakPoint)*magicNumberOne, magicNumberTwo));
+                    scrollListDown(scrollMultiplier);
+                } else if (isTiltUpward(breakPoint, ignoreRange))
+                {
+                    Log.d("test", "upwards");
+                    int scrollMultiplier = (int) Math.abs(Math.pow((pitch-breakPoint)*magicNumberOne, magicNumberTwo));
+                    Log.d("Pitch", String.valueOf(scrollMultiplier));
+                    scrollListUp(scrollMultiplier);
                 }
             }
-            else if (isTiltUpward())
-            {
-                if (currentScroll.equals((TILT_BACK_FORTH))) {
+            if (currentScroll.equals(TILT_LEFT_RIGHT)) {
+                float breakPoint = 0.0f;
+                float ignoreRange = .4f;
+                float magicNumberOne = 13f;
+                float magicNumberTwo = 3f;
+                if (isTiltLeft(breakPoint, ignoreRange)) {
+                    Log.d("test", "downwards");
+                    int scrollMultiplier = (int) Math.abs(Math.pow((roll-breakPoint)*magicNumberOne, magicNumberTwo));
+                    Log.d("Roll", String.valueOf(scrollMultiplier));
+                    scrollListDown(scrollMultiplier);
+                } else if (isTiltRight(breakPoint, ignoreRange))
+                {
                     Log.d("test", "upwards");
-                    scrollListUp();
+                    int scrollMultiplier = (int) Math.abs(Math.pow((roll-breakPoint)*magicNumberOne, magicNumberTwo));
+                    Log.d("Roll", String.valueOf(scrollMultiplier));
+                    scrollListUp(scrollMultiplier);
                 }
             }
         }
@@ -366,7 +400,7 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-    public boolean isTiltUpward()
+    public boolean isTiltUpward(float breakPoint, float ignoreRange)
     {
         if (mGravity != null && mGeomagnetic != null)
         {
@@ -394,21 +428,14 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
                 pitch = orientation[1];
                 roll = orientation[2];
 
-                if (pitch > -1.4 && roll > 1)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                return (pitch + ignoreRange/2) < breakPoint;
             }
         }
 
         return false;
     }
 
-    public boolean isTiltDownward()
+    public boolean isTiltDownward(float breakPoint, float ignoreRange)
     {
         if (mGravity != null && mGeomagnetic != null)
         {
@@ -425,21 +452,61 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
                 pitch = orientation[1];
                 roll = orientation[2];
 
-                if (pitch > -1 && roll < 0.1)
-                {
-
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                return (pitch - ignoreRange/2) > breakPoint;
             }
         }
 
         return false;
     }
 
+
+    public boolean isTiltRight(float breakPoint, float ignoreRange)
+    {
+        if (mGravity != null && mGeomagnetic != null)
+        {
+            float R[] = new float[9];
+            float I[] = new float[9];
+
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+
+            if (success)
+            {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+
+                pitch = orientation[1];
+                roll = orientation[2];
+
+                return (roll + ignoreRange/2) < breakPoint;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isTiltLeft(float breakPoint, float ignoreRange)
+    {
+        if (mGravity != null && mGeomagnetic != null)
+        {
+            float R[] = new float[9];
+            float I[] = new float[9];
+
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+
+            if (success)
+            {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+
+                pitch = orientation[1];
+                roll = orientation[2];
+
+                return (roll - ignoreRange/2) > breakPoint;
+            }
+        }
+
+        return false;
+    }
     //End Tilt Stuff
 
     private void startTest() {
