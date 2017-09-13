@@ -17,10 +17,12 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.widget.TextView;
 
 import org.w3c.dom.Text;
@@ -35,7 +37,7 @@ import java.util.Collections;
  * Created by Yannick on 31.05.2017.
  */
 
-public class ListActivity extends AppCompatActivity implements SensorEventListener {
+public class ListActivity extends AppCompatActivity implements SensorEventListener, GestureDetector.OnGestureListener {
 
     private static final String TAG = "ListActivity";
 
@@ -509,6 +511,49 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     }
     //End Tilt Stuff
 
+    // Start Swipe Scroll
+
+    @Override
+    public boolean onDown(MotionEvent motionEvent) {
+        return true;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent motionEvent) {
+
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent motionEvent) {
+        return true;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        Log.d("v", String.valueOf(v));
+        Log.d("v1", String.valueOf(v1));
+        return true;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent motionEvent) {
+        Log.d("mevent", String.valueOf(motionEvent));
+    }
+
+    @Override
+    public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        Log.d("v", String.valueOf(v));
+        Log.d("v1", String.valueOf(v1));
+        return true;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        return true;
+    }
+
+    // End Swipe Scroll
+
     private void startTest() {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -567,6 +612,10 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         builder.show();
 
     }
+
+
+
+
 
     //TODO: more adapters/methods for list creation
 }
