@@ -8,6 +8,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
@@ -24,6 +25,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.w3c.dom.Text;
@@ -84,6 +86,7 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     private String testElement="145";
     private long startTime = 0;
     private long endTime = 0;
+    private View.OnClickListener listener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -99,10 +102,19 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         dragView = findViewById(R.id.dragOverlay);
         dragView.setVisibility(View.GONE);
         final GestureDetector gdt = new GestureDetector(this, new GestureListenerDrag());
+        listener = new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d("hallo","jemand da!");
+            }
+        };
+        list.setOnClickListener(listener);
         dragView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 gdt.onTouchEvent(motionEvent);
+                //list.onTouchEvent(motionEvent);
+                Log.d("dragView","onTouch");
                 return true;
             }
         });
@@ -574,7 +586,7 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         //TODO: choose element to scroll to at random
 
         if (currentList.equals(NUMERICAL)) {
-            testElement = "145";
+            testElement = "1";
             builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the element \"" +testElement+ "\" and click it. Your time will be saved. Ready?");
         } else if (currentList.equals(ALPHABETICAL)) {
             testElement="Terry Burgo";
