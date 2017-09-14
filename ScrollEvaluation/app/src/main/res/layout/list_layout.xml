@@ -37,4 +37,12 @@
 
     </LinearLayout>
 
+    <View
+        android:id="@+id/dragOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginTop="?android:attr/actionBarSize" />
+
 </RelativeLayout>

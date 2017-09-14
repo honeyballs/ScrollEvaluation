@@ -23,6 +23,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
 import android.widget.TextView;
 
 import org.w3c.dom.Text;
@@ -73,7 +74,7 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
     //TextField to show the current scrolling method
     private TextView scrollView;
-
+    private View dragView;
     //Tilt Shit
     private SensorManager mSensorManager;
     private Sensor accelerometer;
@@ -94,8 +95,17 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         setSupportActionBar(toolbar);
 
         scrollView = (TextView) findViewById(R.id.scrollingTextView);
-
         list = (RecyclerView) findViewById(R.id.recycler_view);
+        dragView = findViewById(R.id.dragOverlay);
+        dragView.setVisibility(View.GONE);
+        final GestureDetector gdt = new GestureDetector(this, new GestureListenerDrag());
+        dragView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                gdt.onTouchEvent(motionEvent);
+                return true;
+            }
+        });
 
         //Tilt Shit
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -148,6 +158,11 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         initListeners();
 
         updateScrollView();
+        if (currentScroll.equals(DOT)) {
+            dragView.setVisibility(View.VISIBLE);
+        } else {
+            dragView.setVisibility(View.GONE);
+        }
         setList();
 
     }
@@ -215,6 +230,11 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
                 if (!currentScroll.equals(scrollType)) {
                     currentScroll = scrollType;
+                    if (currentScroll.equals(DOT)) {
+                        dragView.setVisibility(View.VISIBLE);
+                    } else {
+                        dragView.setVisibility(View.GONE);
+                    }
                 }
 
                 Log.e(TAG, listType);
@@ -363,14 +383,11 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
                 float magicNumberOne = 13f;
                 float magicNumberTwo = 3f;
                 if (isTiltDownward(breakPoint, ignoreRange)) {
-                    Log.d("test", "downwards");
                     int scrollMultiplier = (int) Math.abs(Math.pow((pitch-breakPoint)*magicNumberOne, magicNumberTwo));
                     scrollListDown(scrollMultiplier);
                 } else if (isTiltUpward(breakPoint, ignoreRange))
                 {
-                    Log.d("test", "upwards");
                     int scrollMultiplier = (int) Math.abs(Math.pow((pitch-breakPoint)*magicNumberOne, magicNumberTwo));
-                    Log.d("Pitch", String.valueOf(scrollMultiplier));
                     scrollListUp(scrollMultiplier);
                 }
             }
@@ -380,15 +397,11 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
                 float magicNumberOne = 13f;
                 float magicNumberTwo = 3f;
                 if (isTiltLeft(breakPoint, ignoreRange)) {
-                    Log.d("test", "downwards");
                     int scrollMultiplier = (int) Math.abs(Math.pow((roll-breakPoint)*magicNumberOne, magicNumberTwo));
-                    Log.d("Roll", String.valueOf(scrollMultiplier));
                     scrollListDown(scrollMultiplier);
                 } else if (isTiltRight(breakPoint, ignoreRange))
                 {
-                    Log.d("test", "upwards");
                     int scrollMultiplier = (int) Math.abs(Math.pow((roll-breakPoint)*magicNumberOne, magicNumberTwo));
-                    Log.d("Roll", String.valueOf(scrollMultiplier));
                     scrollListUp(scrollMultiplier);
                 }
             }
@@ -614,7 +627,32 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     }
 
 
+    class GestureListenerDrag extends GestureDetector.SimpleOnGestureListener {
 
+        private float distance = 0f;
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            Log.d("distanceY", ""+distanceY);
+            distance += distanceY;
+            Log.e("total distance", ""+distance);
+            return super.onScroll(e1, e2, distanceX, distanceY);
+        }
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            Log.d("onDown", "down");
+            distance = 0f;
+            return super.onDown(e);
+        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            Log.d("onSingleTap", "onSingleTapUp");
+            //listener.onTouch(recyclerView, e);
+            return true;
+        }
+    }
 
 
     //TODO: more adapters/methods for list creation
