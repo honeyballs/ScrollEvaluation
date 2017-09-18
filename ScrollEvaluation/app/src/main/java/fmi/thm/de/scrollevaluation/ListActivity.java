@@ -40,7 +40,7 @@ import java.util.Collections;
  * Created by Yannick on 31.05.2017.
  */
 
-public class ListActivity extends AppCompatActivity implements SensorEventListener, GestureDetector.OnGestureListener {
+public class ListActivity extends AppCompatActivity implements SensorEventListener {
 
     private static final String TAG = "ListActivity";
 
@@ -97,18 +97,17 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(toolbar);
 
+        //TextView to display the scrolling method
         scrollView = (TextView) findViewById(R.id.scrollingTextView);
+
+        //Initialize the RecyclerView
         list = (RecyclerView) findViewById(R.id.recycler_view);
+
+        //Initialze an invisible overlay for the dot scrolling
         dragView = findViewById(R.id.dragOverlay);
         dragView.setVisibility(View.GONE);
         final GestureDetector gdt = new GestureDetector(this, new GestureListenerDrag());
-        listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Log.d("hallo","jemand da!");
-            }
-        };
-        list.setOnClickListener(listener);
+
         dragView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -536,48 +535,6 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     }
     //End Tilt Stuff
 
-    // Start Swipe Scroll
-
-    @Override
-    public boolean onDown(MotionEvent motionEvent) {
-        return true;
-    }
-
-    @Override
-    public void onShowPress(MotionEvent motionEvent) {
-
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent motionEvent) {
-        return true;
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
-        Log.d("v", String.valueOf(v));
-        Log.d("v1", String.valueOf(v1));
-        return true;
-    }
-
-    @Override
-    public void onLongPress(MotionEvent motionEvent) {
-        Log.d("mevent", String.valueOf(motionEvent));
-    }
-
-    @Override
-    public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
-        Log.d("v", String.valueOf(v));
-        Log.d("v1", String.valueOf(v1));
-        return true;
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        return true;
-    }
-
-    // End Swipe Scroll
 
     private void startTest() {
 
@@ -662,8 +619,9 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         public boolean onSingleTapUp(MotionEvent e) {
             Log.d("onSingleTap", "onSingleTapUp");
             //listener.onTouch(recyclerView, e);
-            return true;
+            return false;
         }
+
     }
 
 
