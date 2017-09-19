@@ -77,6 +77,8 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     //TextField to show the current scrolling method
     private TextView scrollView;
     private View dragView;
+    private float dotDistance = 0f;
+    private boolean dotShouldScroll = false;
     //Tilt Shit
     private SensorManager mSensorManager;
     private Sensor accelerometer;
@@ -86,7 +88,6 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     private String testElement="145";
     private long startTime = 0;
     private long endTime = 0;
-    private View.OnClickListener listener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -107,8 +108,8 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         dragView = findViewById(R.id.dragOverlay);
         dragView.setVisibility(View.GONE);
         final GestureDetector gdt = new GestureDetector(this, new GestureListenerDrag());
-
         dragView.setOnTouchListener(new View.OnTouchListener() {
+
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 gdt.onTouchEvent(motionEvent);
@@ -595,6 +596,16 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+    private void scrollDot() {
+        while(dotShouldScroll) {
+            if(dotDistance > 0) {
+                scrollListUp((int) dotDistance);
+            } else {
+                scrollListDown((int) -dotDistance);
+            }
+        }
+    }
+
 
     class GestureListenerDrag extends GestureDetector.SimpleOnGestureListener {
 
@@ -604,6 +615,7 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
             Log.d("distanceY", ""+distanceY);
             distance += distanceY;
+            dotDistance = distance;
             Log.e("total distance", ""+distance);
             return super.onScroll(e1, e2, distanceX, distanceY);
         }
@@ -613,13 +625,6 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
             Log.d("onDown", "down");
             distance = 0f;
             return super.onDown(e);
-        }
-
-        @Override
-        public boolean onSingleTapUp(MotionEvent e) {
-            Log.d("onSingleTap", "onSingleTapUp");
-            //listener.onTouch(recyclerView, e);
-            return false;
         }
 
     }
