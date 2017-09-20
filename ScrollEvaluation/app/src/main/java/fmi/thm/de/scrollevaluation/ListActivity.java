@@ -8,8 +8,11 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -17,10 +20,14 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import org.w3c.dom.Text;
@@ -29,6 +36,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Random;
 
 
 /**
@@ -41,16 +49,16 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
     private static final int REQUEST_CODE = 1337;
 
-    //bundle keys
+    //Bundle keys
     public static final String SCROLL_KEY = "scrollType";
     public static final String LIST_KEY = "listType";
 
-    //list types
+    //List types
     private static final String NUMERICAL = "Numerical (ordered)";
     private static final String ALPHABETICAL = "Alphabetical (semi ordered)";
     private static final String UNORDERED = "Images (chaotic)";
 
-    //scrolling methods
+    //Scrolling methods
     private static final String STANDARD = "Standard";
     private static final String VOLUME = "Volume Buttons";
     private static final String TILT_BACK_FORTH = "Tilt Back & Forth";
@@ -58,21 +66,27 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     private static final String WHEEL = "Scrollwheel";
     private static final String TILT_LEFT_RIGHT = "Tilt Left & Right" ;
 
+    //List
     private RecyclerView list;
     private RecyclerView.Adapter adapter;
-
     private ArrayList<String> data;
-
     private MyLayoutManager layoutManager;
+
     private int scrollMultiplier = 150;
 
+    //Currently used method/list
     private String currentList = NUMERICAL;
     private String currentScroll = STANDARD;
 
     //TextField to show the current scrolling method
     private TextView scrollView;
 
-    //Tilt Shit
+    //Dot Scroll
+    private View dragView;
+    private float dotDistance = 0f;
+    private boolean dotShouldScroll = false;
+
+    //Tilt Scroll
     private SensorManager mSensorManager;
     private Sensor accelerometer;
     private Sensor magnetometer;
@@ -91,27 +105,46 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_toolbar);
         setSupportActionBar(toolbar);
 
+        //TextView to display the scrolling method
         scrollView = (TextView) findViewById(R.id.scrollingTextView);
 
+        //Initialize the RecyclerView
         list = (RecyclerView) findViewById(R.id.recycler_view);
 
-        //Tilt Shit
-        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        //Initialze an invisible overlay for the dot scrolling
+        dragView = findViewById(R.id.dragOverlay);
+        dragView.setVisibility(View.GONE);
+        final GestureDetector gdt = new GestureDetector(this, new GestureListenerDrag());
+        dragView.setOnTouchListener(new View.OnTouchListener() {
 
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                //If the screen is no longer touched there should be no scrolling.
+                //Used to cancel the thread "cycle" at the bottom of this class
+                if (motionEvent.getAction() == MotionEvent.ACTION_UP) {
+                    dotDistance = 0f;
+                    dotShouldScroll = false;
+                    Log.e("UpEvent", "called");
+                }
+                gdt.onTouchEvent(motionEvent);
+                Log.d("dragView","onTouch");
+                return true;
+            }
+        });
+
+        //Initialize sensor stuff for tilt scrolling
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
         initListeners();
 
-        //improves performance
+        //Initialize List
         list.setHasFixedSize(true);
-
         layoutManager = new MyLayoutManager(this);
         list.setLayoutManager(layoutManager);
-
         data = new ArrayList<>();
 
-        //retrieve saved data
+        //Retrieve saved scrolling method/list type
         SharedPreferences prefs = this.getPreferences(Context.MODE_PRIVATE);
         if (prefs != null) {
             currentList = prefs.getString(LIST_KEY, NUMERICAL);
@@ -120,17 +153,11 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
+
     public void initListeners()
     {
         mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST);
         mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_FASTEST);
-    }
-
-    @Override
-    public void onDestroy()
-    {
-        mSensorManager.unregisterListener(this);
-        super.onDestroy();
     }
 
     @Override
@@ -144,8 +171,14 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     protected void onResume() {
         super.onResume();
         initListeners();
-
         updateScrollView();
+
+        if (currentScroll.equals(DOT)) {
+            dragView.setVisibility(View.VISIBLE);
+        } else {
+            dragView.setVisibility(View.GONE);
+        }
+
         setList();
 
     }
@@ -195,6 +228,13 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         super.onPause();
     }
 
+    @Override
+    public void onDestroy()
+    {
+        mSensorManager.unregisterListener(this);
+        super.onDestroy();
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -213,6 +253,11 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
                 if (!currentScroll.equals(scrollType)) {
                     currentScroll = scrollType;
+                    if (currentScroll.equals(DOT)) {
+                        dragView.setVisibility(View.VISIBLE);
+                    } else {
+                        dragView.setVisibility(View.GONE);
+                    }
                 }
 
                 Log.e(TAG, listType);
@@ -246,7 +291,7 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
             case UNORDERED:
                 data.clear();
                 list.setLayoutManager(new GridLayoutManager(this, 2));
-                fillListWithNumbers(50);
+                fillListWithNumbers(150);
                 adapter = new ListAdapterChaotic(data);
                 list.setAdapter(adapter);
             default:
@@ -254,6 +299,8 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    //Functions to populate the lists.
+    //This will be used for images and numbers.
     private void fillListWithNumbers(int length) {
         for (int i = 1; i<= length; i ++) {
             data.add("" + i);
@@ -277,8 +324,10 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
             }
         }
     }
+    //End List functions
 
-    //Override Volume Keys to scroll
+    //Begin volume scroll functions
+    //Override Volume Keys to scroll if the scrolling method is chosen
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
 
@@ -295,7 +344,6 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    //Begin volume scroll functions
     //Reset multiplier when button is released
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
@@ -303,36 +351,27 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
             scrollMultiplier = 150;
         }
-
         return super.onKeyUp(keyCode, event);
     }
+    //End volume scrolling
 
-
-
+    //Functions to scroll the list
     private void scrollListDown() {
-
         scrollMultiplier++;
         list.smoothScrollBy(0, 1 * scrollMultiplier);
-        Log.e(TAG, "" + scrollMultiplier);
-
     }
 
     private void scrollListDown(int scrollMultiplier) {
-
         list.smoothScrollBy(0, 1 * scrollMultiplier);
-        Log.e(TAG, "" + scrollMultiplier);
-
     }
 
     private void scrollListUp() {
         scrollMultiplier++;
         list.smoothScrollBy(0, -1 * scrollMultiplier);
-
     }
 
     private void scrollListUp(int scrollMultiplier) {
         list.smoothScrollBy(0, -1 * scrollMultiplier);
-
     }
     //End volume scroll functions
 
@@ -361,14 +400,11 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
                 float magicNumberOne = 13f;
                 float magicNumberTwo = 3f;
                 if (isTiltDownward(breakPoint, ignoreRange)) {
-                    Log.d("test", "downwards");
                     int scrollMultiplier = (int) Math.abs(Math.pow((pitch-breakPoint)*magicNumberOne, magicNumberTwo));
                     scrollListDown(scrollMultiplier);
                 } else if (isTiltUpward(breakPoint, ignoreRange))
                 {
-                    Log.d("test", "upwards");
                     int scrollMultiplier = (int) Math.abs(Math.pow((pitch-breakPoint)*magicNumberOne, magicNumberTwo));
-                    Log.d("Pitch", String.valueOf(scrollMultiplier));
                     scrollListUp(scrollMultiplier);
                 }
             }
@@ -378,15 +414,11 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
                 float magicNumberOne = 13f;
                 float magicNumberTwo = 3f;
                 if (isTiltLeft(breakPoint, ignoreRange)) {
-                    Log.d("test", "downwards");
                     int scrollMultiplier = (int) Math.abs(Math.pow((roll-breakPoint)*magicNumberOne, magicNumberTwo));
-                    Log.d("Roll", String.valueOf(scrollMultiplier));
                     scrollListDown(scrollMultiplier);
                 } else if (isTiltRight(breakPoint, ignoreRange))
                 {
-                    Log.d("test", "upwards");
                     int scrollMultiplier = (int) Math.abs(Math.pow((roll-breakPoint)*magicNumberOne, magicNumberTwo));
-                    Log.d("Roll", String.valueOf(scrollMultiplier));
                     scrollListUp(scrollMultiplier);
                 }
             }
@@ -509,29 +541,49 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
     }
     //End Tilt Stuff
 
+    //Generate a random element to test for which will always be in the last third
+    private String getTestElement() {
+        int min = 100;
+        int max = 150;
+        Random ran = new Random();
+        int value = ran.nextInt(max - min + 1) + min;
+        if (currentList.equals(NUMERICAL) || currentList.equals(UNORDERED)) {
+            return ""+value;
+        } else {
+            if (value <= 110) {
+                return "Salina Uy";
+            } else if (value <= 120) {
+                return "Theola Finck";
+            } else if (value <= 130) {
+                return "Trudi Buggs";
+            } else if (value <= 140) {
+                return  "Vern Stork";
+            } else {
+                return "Zola Cheeseman";
+            }
+        }
+    }
+
+
+
     private void startTest() {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Test scrolling method");
-        //TODO: choose element to scroll to at random
+        testElement = getTestElement();
 
         if (currentList.equals(NUMERICAL)) {
-            testElement = "145";
             builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the element \"" +testElement+ "\" and click it. Your time will be saved. Ready?");
         } else if (currentList.equals(ALPHABETICAL)) {
-            testElement="Terry Burgo";
             builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the element \"" +testElement+ "\" and click it. Your time will be saved. Ready?");
         } else {
-            testElement="47";
-            builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the element that says \"This\" and click it. Your time will be saved. Ready?");
-
+            builder.setMessage("As soon as you press \"Ok\" a timer starts. Scroll to the image that says \"This\" and click it. Your time will be saved. Ready?");
         }
 
 
         builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-
                 if (currentList.equals(NUMERICAL)) {
                     list.scrollToPosition(0);
                     ListAdapter la = (ListAdapter) adapter;
@@ -551,9 +603,6 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
                     lac.setStartTime(startTime);
                     lac.setNrOfTestitem(testElement);
                 }
-
-                Log.e(TAG, ""+startTime);
-
             }
         });
 
@@ -568,5 +617,46 @@ public class ListActivity extends AppCompatActivity implements SensorEventListen
 
     }
 
-    //TODO: more adapters/methods for list creation
+    private void scrollDot() {
+        if(dotDistance > 0) {
+            scrollListUp((int) dotDistance);
+        } else {
+            scrollListDown((int) -dotDistance);
+        }
+    }
+
+    //Listen for the gestures a user makes within the dragView
+    class GestureListenerDrag extends GestureDetector.SimpleOnGestureListener {
+
+        //This thread handles the scrolling. It needs to run on the main thread to influence the list
+        private Handler handler = new Handler(Looper.getMainLooper());
+        private Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                if (dotShouldScroll) {
+                    scrollDot();
+                    handler.postDelayed(this, 50);
+                }
+            }
+        };
+
+        //Calculate the multiplying factor for scrolling
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            Log.d("distanceY", ""+distanceY);
+            dotDistance += distanceY;
+            return super.onScroll(e1, e2, distanceX, distanceY);
+        }
+
+        //Start the thread "cycle" once the screen is touched
+        @Override
+        public boolean onDown(MotionEvent e) {
+            Log.d("onDown", "down");
+            //distance = 0f;
+            dotShouldScroll = true;
+            handler.post(runnable);
+            return super.onDown(e);
+        }
+    }
+
 }
